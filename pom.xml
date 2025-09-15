@@ -9,9 +9,9 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>dev.websocket</groupId>
-	<artifactId>backend-seminar</artifactId>
+	<artifactId>chat-backend</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>backend-seminar</name>
+	<name>chat-backend</name>
 	<description>Demo project for Spring Boot</description>
 	<url/>
 	<licenses>

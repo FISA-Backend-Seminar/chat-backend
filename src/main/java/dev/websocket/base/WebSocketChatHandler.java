@@ -27,9 +27,15 @@ public class WebSocketChatHandler extends TextWebSocketHandler {
     @Bean
     SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(csrf -> csrf.ignoringRequestMatchers("/ws/**"))
-                .authorizeHttpRequests(auth -> auth.requestMatchers("/ws/**").permitAll()
-                        .anyRequest().permitAll());
+                .cors(cors -> {}) // CORS 켜두기
+                .csrf(csrf -> csrf
+                        .ignoringRequestMatchers("/ws/**", "/chat/**")
+                )
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/ws/**", "/chat/**").permitAll()
+                        //.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() // (선택) preflight 허용
+                        .anyRequest().permitAll()
+                );
         return http.build();
     }
 
