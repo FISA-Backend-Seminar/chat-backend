@@ -1,5 +1,6 @@
 package dev.websocket.chat.dto;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -9,12 +10,15 @@ import org.springframework.web.socket.WebSocketSession;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Getter
 public class ChatRoom {
     private final String roomId;
     private final String name;
-    private final Set<WebSocketSession> sessions = new HashSet<>();
+
+    @JsonIgnore
+    private final Set<WebSocketSession> sessions = ConcurrentHashMap.newKeySet();
 
     @Builder
     public ChatRoom(String roomId, String name) {

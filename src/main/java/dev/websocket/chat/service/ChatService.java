@@ -11,15 +11,23 @@ import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.UUID;
 
-@RequiredArgsConstructor
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class ChatService {
 
     private final ChatRepository chatRepository;
+
+    /** 사용자가 name만 주면 서버가 roomId(UUID)를 발급 */
+    public ChatRoom createRoom(String name) {
+        String roomId = UUID.randomUUID().toString();
+        ChatRoom room = ChatRoom.of(roomId, name);
+        chatRepository.save(roomId, room);
+        log.info("Created room: {} ({})", roomId, name);
+        return room;
+    }
 
     public List<ChatRoom> findAll() {
         return chatRepository.findAll();
@@ -29,20 +37,7 @@ public class ChatService {
         return chatRepository.findById(roomId);
     }
 
-    public ChatRoom createRoom(String roomId) {
-        ChatRoom room = findRoomById(roomId); // ← 여기서 메서드 재사용
-        if (room == null) {
-            String defaultName = "room-" + roomId; // name 안 쓸 거면 roomId로 해도 OK
-            room = ChatRoom.of(roomId, defaultName);
-            chatRepository.save(roomId, room);
-            log.info("Created room: {} ({})", roomId, defaultName);
-        }
-        return room;
-    }
-
-    /**
-     * 메시지 액션 처리 (ENTER / TALK)
-     */
+    /** 메시지 액션 처리 (ENTER / TALK) — 자동 생성 금지 */
     public void handleAction(String roomId, WebSocketSession session, ChatMessage chatMessage) {
         try {
             if (roomId == null || roomId.isBlank()) {
@@ -50,23 +45,28 @@ public class ChatService {
                 return;
             }
 
-            // 특정 채팅방을 구독할 때
-            if (chatMessage.getMessageType().equals(ChatMessage.MessageType.ENTER)) {
-                // 없으면 기본 이름으로 생성 (name을 전혀 쓰지 않는다면 roomId로 대체 가능)
-                ChatRoom enterRoom = createRoom(roomId);
-                enterRoom.join(session);
+            ChatRoom room = chatRepository.findById(roomId);
+            if (chatMessage.getMessageType() == ChatMessage.MessageType.ENTER) {
+                if (room == null) { // ❌ 없는 방이면 에러
+                    sendError(session, "ROOM_NOT_FOUND");
+                    return;
+                }
+                room.join(session);
                 session.getAttributes().put("roomId", roomId);
 
                 if (isBlank(chatMessage.getMessage())) {
                     chatMessage.setMessage(chatMessage.getSender() + "님이 입장했습니다.");
                 }
+            } else {
+                // TALK인 경우에도 방 검증
+                if (room == null) {
+                    sendError(session, "ROOM_NOT_FOUND");
+                    return;
+                }
             }
-
-            ChatRoom room = chatRepository.findById(roomId); // 클라이언트가 보낸 아이디가 있는 방이 있는지 확인
 
             TextMessage outbound = Util.Chat.resolveTextMessage(chatMessage);
             room.sendMessage(outbound);
-
 
         } catch (Exception e) {
             log.error("handleAction error: {}", e.getMessage(), e);
