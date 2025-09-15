@@ -37,6 +37,33 @@ public class ChatService {
         return chatRepository.findById(roomId);
     }
 
+    public void handleDisconnect(WebSocketSession session) {
+        Object roomIdAttr = session.getAttributes().get("roomId");
+        Object senderAttr = session.getAttributes().get("sender");
+        if (roomIdAttr == null || senderAttr == null) return;
+
+        String roomId = roomIdAttr.toString();
+        String sender = senderAttr.toString();
+
+        ChatRoom room = chatRepository.findById(roomId);
+        if (room == null) return;
+
+        room.getSessions().remove(session);
+
+        // 퇴장 안내 메시지: MessageType=ENTER, message="OOO님이 퇴장했습니다."
+        ChatMessage leaveMsg = ChatMessage.builder()
+                .messageType(ChatMessage.MessageType.ENTER)
+                .roomId(roomId)
+                .sender(sender)
+                .message(sender + "님이 퇴장했습니다.")
+                .build();
+
+        TextMessage outbound = Util.Chat.resolveTextMessage(leaveMsg);
+        room.sendMessage(outbound);
+
+        log.info("{} disconnected from room {}", sender, roomId);
+    }
+
     /** 메시지 액션 처리 (ENTER / TALK) — 자동 생성 금지 */
     public void handleAction(String roomId, WebSocketSession session, ChatMessage chatMessage) {
         try {
@@ -52,6 +79,7 @@ public class ChatService {
                     return;
                 }
                 room.join(session);
+                session.getAttributes().put("sender", chatMessage.getSender());
                 session.getAttributes().put("roomId", roomId);
 
                 if (isBlank(chatMessage.getMessage())) {

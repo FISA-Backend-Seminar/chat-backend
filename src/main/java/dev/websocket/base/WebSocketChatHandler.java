@@ -7,6 +7,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.stereotype.Component;
+import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
@@ -21,6 +22,12 @@ public class WebSocketChatHandler extends TextWebSocketHandler {
         String payload = message.getPayload();
         ChatMessage chatMessage = Util.Chat.resolvePayload(payload);
         chatService.handleAction(chatMessage.getRoomId(), session, chatMessage);
+    }
+
+    @Override
+    public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
+        // 세션이 속한 방 찾아서 제거
+        chatService.handleDisconnect(session);
     }
 
     // 이 코드 추가했더니 OPEN이 됨
