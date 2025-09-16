@@ -15,6 +15,9 @@ public class WebSocketConfig implements WebSocketConfigurer {
     @Override
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
         registry.addHandler(webSocketChatHandler, "ws/chat") // 앞에 "/" 추가했더니 OPEN이 됨
-                .setAllowedOrigins("*");
+                .setAllowedOrigins(
+                        "http://192.168.0.132:5173",
+                        "http://192.168.0.33:5173"
+                ); // 접속 가능한 프론트 주소
     }
 }
