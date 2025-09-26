@@ -9,7 +9,7 @@ node {
   }
 
   stage('SonarQube Analysis') {
-    withSonarQubeEnv() {
+    withSonarQubeEnv('logmoa') {
       sh './mvnw sonar:sonar -DskipTests'  // SonarQube 분석
     }
   }
