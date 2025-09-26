@@ -9,8 +9,13 @@ node {
   }
 
   stage('SonarQube Analysis') {
-    withSonarQubeEnv() {
-      sh './mvnw sonar:sonar -DskipTests'  // SonarQube 분석
+    withSonarQubeEnv('myproject-pipeline') {
+      sh '''
+      ./mvnw sonar:sonar -DskipTests \
+              -Dsonar.host.url=$SONAR_HOST_URL \
+              -Dsonar.token=$SONAR_AUTH_TOKEN \
+              -Dsonar.projectKey=chat-backend
+      '''
     }
   }
 }
