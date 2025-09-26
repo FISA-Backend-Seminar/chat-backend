@@ -1,7 +1,7 @@
 node {
   stage('SCM') {
     checkout scm
-    sh 'chmod +x mvnw'     // mvnw를 쓰는 경우만 필요
+    sh 'chmod +x mvnw'     // mvnw를 쓰는 경우만 필요!!
   }
 
   stage('Build') {
